@@ -64,7 +64,7 @@ async function main() {
       recordsRead: filings.length,
       metadata: { lookbackDays, recordsInserted: insertedCount, companiesFound: companyIds.size },
     }).where(eq(ingestionRuns.id, run.id));
-    process.stdout.write("SEC ingestion completed: " + filings.length + " filings read, " + insertedCount + " new filings stored.\\n");
+    process.stdout.write("SEC ingestion completed: " + filings.length + " filings read, " + insertedCount + " new filings stored.\n");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown ingestion error";
     await db.update(ingestionRuns).set({
@@ -77,7 +77,7 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  process.stderr.write((error instanceof Error ? error.message : String(error)) + "\\n");
+  process.stderr.write((error instanceof Error ? error.message : String(error)) + "\n");
   process.exitCode = 1;
 }).finally(async () => {
   await closeDb();
