@@ -13,29 +13,29 @@ function decodeXml(value: string): string {
 }
 
 function readTag(source: string, tag: string): string | undefined {
-  const match = source.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/\\s*${tag}>`, "i"));
-  return match?.[1] ? decodeXml(match[1]).replace(/<[^>]*>/g, " ").replace(/\\s+/g, " ").trim() : undefined;
+  const match = source.match(new RegExp("<" + tag + "\\b[^>]*>([\\s\\S]*?)<\\/\\s*" + tag + ">", "i"));
+  return match?.[1] ? decodeXml(match[1]).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : undefined;
 }
 
 function readAttribute(source: string, attribute: string): string | undefined {
-  return source.match(new RegExp(`\\b${attribute}="([^"]+)"`, "i"))?.[1];
+  return source.match(new RegExp("\\b" + attribute + "=\"([^\"]+)\"", "i"))?.[1];
 }
 
 function parseEntries(xml: string, formType: string): SecFilingRecord[] {
-  const entries = [...xml.matchAll(/<entry\\b[^>]*>([\\s\\S]*?)<\\/entry>/gi)];
+  const entries = [...xml.matchAll(/<entry\b[^>]*>([\s\S]*?)<\/entry>/gi)];
   const results: SecFilingRecord[] = [];
 
   for (const [, entry] of entries) {
     const title = readTag(entry, "title");
     const updated = readTag(entry, "updated") ?? readTag(entry, "published");
     const summary = readTag(entry, "summary");
-    const accessionNumber = summary?.match(/Accession Number:\\s*([0-9-]+)/i)?.[1];
-    const cikMatch = title?.match(/\\((\\d{7,10})\\)/);
-    const linkAttributes = [...entry.matchAll(/<link\\b([^>]*)\\/?\\s*>/gi)].map((match) => match[1]);
+    const accessionNumber = summary?.match(/Accession Number:\s*([0-9-]+)/i)?.[1];
+    const cikMatch = title?.match(/\((\d{7,10})\)/);
+    const linkAttributes = [...entry.matchAll(/<link\b([^>]*)\/?\s*>/gi)].map((match) => match[1]);
     const link = linkAttributes.find((attributes) => readAttribute(attributes, "rel") === "alternate") ?? linkAttributes[0];
     const href = link && readAttribute(link, "href");
     const filedAt = updated ? new Date(updated) : undefined;
-    const companyName = title?.replace(/\\s*\\(\\d{7,10}\\).*$/, "").replace(/\\s+\\((Filer|Filed by|Subject)\\).*$/i, "").trim();
+    const companyName = title?.replace(/\s*\(\d{7,10}\).*$/, "").replace(/\s+\((Filer|Filed by|Subject)\).*$/i, "").trim();
 
     if (!title || !cikMatch || !accessionNumber || !href || !filedAt || Number.isNaN(filedAt.getTime()) || !companyName) continue;
     results.push({
@@ -73,11 +73,11 @@ export class SecLatestFilingsProvider {
         count: "100",
         output: "atom",
       });
-      const response = await fetch(`${SEC_CURRENT_FILINGS_URL}?${query}`, {
+      const response = await fetch(SEC_CURRENT_FILINGS_URL + "?" + query, {
         headers: { "User-Agent": this.userAgent, Accept: "application/atom+xml" },
         cache: "no-store",
       });
-      if (!response.ok) throw new Error(`SEC latest filings request for ${formType} failed with status ${response.status}.`);
+      if (!response.ok) throw new Error("SEC latest filings request for " + formType + " failed with status " + response.status + ".");
       const xml = await response.text();
       results.push(...parseEntries(xml, formType).filter((filing) => filing.filedAt >= since));
       await new Promise((resolve) => setTimeout(resolve, 250));
