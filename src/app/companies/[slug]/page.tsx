@@ -1,0 +1,15 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { AppShell } from "@/components/app-shell";
+import { StatusBadge } from "@/components/status-badge";
+import { listings } from "@/lib/demo-data";
+import { ArrowLeft, ArrowUpRight, Bookmark, ExternalLink, FileText } from "lucide-react";
+
+export function generateStaticParams() { return listings.map((ipo) => ({ slug: ipo.ticker.toLowerCase() })); }
+
+export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const ipo = listings.find((item) => item.ticker.toLowerCase() === slug);
+  if (!ipo) notFound();
+  return <AppShell active="Companies"><div className="page-wrap company-detail-wrap"><Link className="back-link" href="/companies"><ArrowLeft size={14} /> All companies</Link><section className="company-hero"><span className="company-logo detail-logo">{ipo.company[0]}</span><div className="company-title"><div className="eyebrow">{ipo.exchange} LISTING</div><h1>{ipo.company}</h1><p>{ipo.ticker} <span>·</span> {ipo.industry}</p></div><span className="hero-status"><StatusBadge status={ipo.status} /></span><button className="button button-secondary"><Bookmark size={15} /> Watchlist</button></section><div className="detail-grid"><div className="detail-main"><section className="panel detail-panel"><div className="panel-heading"><div><h2>Offering overview</h2><p>Key details for this IPO</p></div></div><div className="overview-grid"><div><small>EXPECTED LISTING</small><strong>{new Date(`${ipo.expectedDate}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</strong></div><div><small>PRICE RANGE</small><strong>{ipo.priceRange}</strong></div><div><small>EXPECTED DEAL SIZE</small><strong>{ipo.dealSize}</strong></div><div><small>EXCHANGE</small><strong>{ipo.exchange}</strong></div><div><small>INDUSTRY</small><strong>{ipo.industry}</strong></div><div><small>OFFERING STATUS</small><strong><StatusBadge status={ipo.status} /></strong></div></div></section><section className="panel detail-panel"><div className="panel-heading"><div><h2>SEC filings</h2><p>Registration statements and amendments</p></div><button className="text-link">View on SEC <ExternalLink size={13} /></button></div><div className="filing-empty"><span><FileText size={19} /></span><div><strong>No filings connected</strong><p>SEC filing data will appear here once a company is matched to its CIK.</p></div></div></section></div><aside className="panel snapshot-panel"><div className="panel-heading"><div><h2>Market snapshot</h2><p>Trading data</p></div></div><div className="snapshot-empty"><span className="snapshot-icon"><ArrowUpRight size={20} /></span><strong>Awaiting market data</strong><p>Once this company is publicly listed, price and performance information will appear here.</p></div></aside></div><div className="data-note">Company figures shown are sample interface data and have not been verified against live sources.</div></div></AppShell>;
+}
