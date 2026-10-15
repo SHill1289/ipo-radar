@@ -7,7 +7,3 @@ if (!connectionString) throw new Error("DATABASE_URL is required to connect to t
 
 const client = postgres(connectionString, { prepare: false, max: 5 });
 export const db = drizzle(client, { schema });
-
-export async function closeDb() {
-  await client.end();
-}
