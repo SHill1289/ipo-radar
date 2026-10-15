@@ -1,5 +1,5 @@
 import { SecSubmissionsProvider } from "@/providers/sec/submissions";
-import { db } from "@/db";
+import { closeDb, db } from "@/db";
 import { ingestionRuns } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -23,4 +23,4 @@ async function main() {
 main().catch((error: unknown) => {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
-});
+}).finally(closeDb);

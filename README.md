@@ -11,6 +11,10 @@ IPO Radar is a Next.js and TypeScript starter for an IPO intelligence dashboard.
 
 The dashboard and sample company pages render without a database. PostgreSQL is required for migrations and ingestion. Set a descriptive `SEC_USER_AGENT` and a company `SEC_CIK` before running `npm run ingest`. SEC ingestion currently fetches recent registration forms for one configured CIK, records a run, and reports filing count. Mapping SEC records to company/offerings rows is not implemented.
 
+## Railway deployment
+
+Create a Railway web service from this repository with build command `npm run build` and start command `npm start`. Attach PostgreSQL and add a `DATABASE_URL` reference variable to the web service. Configure `npm run db:migrate` as its pre-deploy command when you are ready to use the database-backed features. To schedule the current SEC ingestion skeleton, create a second service from the same repository, set its start command to `npm run ingest`, attach the same `DATABASE_URL`, and add `SEC_USER_AGENT` and `SEC_CIK`. The ingestion service must have a real CIK configured; it currently reads filings for only one company and does not populate IPO records yet.
+
 ## Database
 
 The Drizzle schema is in `src/db/schema.ts`. It covers companies, offerings, SEC filings, market snapshots, and ingestion runs. Apply the checked-in migration with `npm run db:migrate` after configuring `DATABASE_URL`.
