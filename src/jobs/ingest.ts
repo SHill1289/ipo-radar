@@ -1,4 +1,4 @@
-import { and, eq, gte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { closeDb, db } from "@/db";
 import { companies, ingestionRuns, secFilings } from "@/db/schema";
 import { SecSubmissionsProvider } from "@/providers/sec/submissions";
