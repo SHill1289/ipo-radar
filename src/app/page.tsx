@@ -1,27 +1,53 @@
-import Link from "next/link";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, CalendarDays, ChevronDown, CircleDollarSign, Clock3, Filter, Plus, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BarChart3, CalendarDays, Clock3, FileText, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { StatusBadge } from "@/components/status-badge";
-import { listings, upcomingListings } from "@/lib/demo-data";
+import { getDashboardData } from "@/lib/dashboard-data";
 
-const bars = [28, 37, 33, 46, 42, 56, 48, 62, 52, 70, 64, 76, 61, 82, 72, 90, 78, 96, 86, 100, 91, 108, 96, 118];
+function formatDate(value: Date) {
+  return value.toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
-export default function DashboardPage() {
+function formatDateTime(value: Date) {
+  return value.toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  const data = await getDashboardData();
+  const statusMessage = data.status === "unconfigured"
+    ? "The dashboard is waiting for its secure database connection."
+    : data.status === "error"
+      ? "We couldn’t load dashboard data. The last scheduled import may still be running."
+      : data.filings.length === 0
+        ? "No matching registration filings have been found yet. New SEC filings will appear here after an import."
+        : `${data.filings.length} most recent SEC registration filings are shown below.`;
+
   return <AppShell><div className="page-wrap">
-    <div className="page-heading"><div><div className="eyebrow">THURSDAY, OCTOBER 15, 2026</div><h1>Good morning, Alex <span className="wave">✳</span></h1><p>Here’s what’s happening in the IPO market today.</p></div><button className="button button-primary"><Plus size={16} /> Add to watchlist</button></div>
+    <div className="page-heading"><div><div className="eyebrow">IPO INTELLIGENCE · SEC EDGAR</div><h1>IPO filing activity</h1><p>Registration filings collected by the scheduled SEC importer.</p></div></div>
     <section className="stats-grid">
-      <article className="stat-card"><div className="stat-top"><span>Upcoming IPOs</span><span className="stat-icon lavender"><CalendarDays size={17} /></span></div><div className="stat-number">{upcomingListings.length}<span className="stat-change positive"><ArrowUpRight size={14} /> 2 this week</span></div><div className="stat-foot">Across the next 30 days</div><div className="sparkline lavender-line"><svg viewBox="0 0 140 32" preserveAspectRatio="none"><path d="M0 27 C14 25 18 14 30 18 S49 23 61 10 S78 20 91 13 S111 18 122 6 S134 12 140 3" /></svg></div></article>
-      <article className="stat-card"><div className="stat-top"><span>Filed this month</span><span className="stat-icon blue"><BarChart3 size={17} /></span></div><div className="stat-number">18<span className="stat-change positive"><ArrowUpRight size={14} /> 12.5%</span></div><div className="stat-foot">vs. 16 last month</div><div className="sparkline blue-line"><svg viewBox="0 0 140 32" preserveAspectRatio="none"><path d="M0 26 C12 18 19 25 28 19 S42 23 53 13 S69 20 78 12 S93 16 103 6 S116 17 126 8 S135 7 140 2" /></svg></div></article>
-      <article className="stat-card"><div className="stat-top"><span>Avg. first-day return</span><span className="stat-icon green"><TrendingUp size={17} /></span></div><div className="stat-number">+24.8%<span className="stat-change positive"><ArrowUpRight size={14} /> 3.2%</span></div><div className="stat-foot">Across 32 IPOs in 2026</div><div className="sparkline green-line"><svg viewBox="0 0 140 32" preserveAspectRatio="none"><path d="M0 25 C13 22 17 16 28 21 S42 13 54 18 S71 10 81 14 S98 4 110 11 S123 4 140 2" /></svg></div></article>
-      <article className="stat-card"><div className="stat-top"><span>Total proceeds YTD</span><span className="stat-icon amber"><CircleDollarSign size={17} /></span></div><div className="stat-number">$28.6<span className="unit">B</span><span className="stat-change positive"><ArrowUpRight size={14} /> 8.1%</span></div><div className="stat-foot">Across 32 completed listings</div><div className="sparkline amber-line"><svg viewBox="0 0 140 32" preserveAspectRatio="none"><path d="M0 27 C12 19 22 22 31 16 S45 25 57 14 S73 18 81 11 S96 21 108 9 S127 10 140 2" /></svg></div></article>
+      <article className="stat-card"><div className="stat-top"><span>Filings this month</span><span className="stat-icon blue"><BarChart3 size={17} /></span></div><div className="stat-number">{data.filingCount}</div><div className="stat-foot">S-1, S-1/A, F-1 and F-1/A filings in Supabase</div></article>
+      <article className="stat-card"><div className="stat-top"><span>Companies tracked</span><span className="stat-icon lavender"><FileText size={17} /></span></div><div className="stat-number">{data.companyCount}</div><div className="stat-foot">Companies identified from SEC filings</div></article>
+      <article className="stat-card"><div className="stat-top"><span>Upcoming IPO dates</span><span className="stat-icon green"><CalendarDays size={17} /></span></div><div className="stat-number">{data.upcomingCount}</div><div className="stat-foot">Confirmed dates recorded in the IPO calendar</div></article>
+      <article className="stat-card"><div className="stat-top"><span>Database</span><span className="stat-icon amber"><Clock3 size={17} /></span></div><div className="stat-number">{data.status === "connected" ? "Connected" : data.status === "unconfigured" ? "Setup needed" : "Unavailable"}</div><div className="stat-foot">{data.latestRun?.finishedAt ? `Last import ${formatDateTime(data.latestRun.finishedAt)}` : "No completed import recorded"}</div></article>
     </section>
-    <section className="insight-banner"><span className="insight-icon"><Sparkles size={17} /></span><div><strong>Market pulse</strong><p>IPO activity is picking up. <b>7 companies</b> are expected to price in the next two weeks, with tech leading the pipeline.</p></div><button aria-label="Dismiss insight">×</button></section>
-    <section className="content-grid"><div className="panel listings-panel"><div className="panel-heading"><div><h2>Upcoming IPOs</h2><p>Keep an eye on companies preparing to go public.</p></div><Link className="text-link" href="/calendar">View calendar <ArrowRight size={14} /></Link></div>
-      <div className="table-tools"><div className="table-tabs"><button className="selected">All <span>12</span></button><button>Watchlist <span>3</span></button><button>Recently filed <span>5</span></button></div><button className="filter-button"><Filter size={14} /> Filters <ChevronDown size={13} /></button></div>
-      <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>STATUS</th><th>EXPECTED DATE</th><th>PRICE RANGE</th><th>DEAL SIZE</th><th /></tr></thead><tbody>{listings.slice(0, 4).map((ipo, index) => <tr key={ipo.ticker}><td><Link href={`/companies/${ipo.ticker.toLowerCase()}`} className="company-cell"><span className={`company-logo logo-${index}`}>{ipo.company[0]}</span><span><strong>{ipo.company}</strong><small>{ipo.ticker} <i>·</i> {ipo.exchange}</small></span></Link></td><td><StatusBadge status={ipo.status} /></td><td><span className="date-cell">{new Date(`${ipo.expectedDate}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></td><td className="data-cell">{ipo.priceRange}</td><td className="data-cell">{ipo.dealSize}</td><td><button className="row-menu" aria-label={`More about ${ipo.company}`}>···</button></td></tr>)}</tbody></table></div>
-      <div className="panel-footer"><span>Showing <b>4</b> of <b>12</b> upcoming IPOs</span><Link href="/calendar">See all IPOs <ArrowRight size={13} /></Link></div>
-    </div><div className="right-column"><div className="panel calendar-panel"><div className="panel-heading"><div><h2>Coming up</h2><p>Next 7 days</p></div><button className="mini-icon" aria-label="Open calendar"><CalendarDays size={16} /></button></div><div className="mini-calendar"><div className="calendar-week"><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span></div><div className="calendar-days"><span>12</span><span>13</span><span>14</span><span className="today">15</span><span className="has-event">16<i /></span><span>17</span><span>18</span></div></div><div className="event-item"><span className="event-date"><b>16</b><small>OCT</small></span><span className="event-details"><b>Northstar AI</b><small>NASDAQ · Pricing expected</small></span><span className="event-dot" /></div><div className="event-item"><span className="event-date"><b>20</b><small>OCT</small></span><span className="event-details"><b>Atlas Robotics</b><small>NYSE · Investor day</small></span><span className="event-dot pale" /></div><Link className="calendar-link" href="/calendar">Open full calendar <ArrowRight size={13} /></Link></div>
-      <div className="panel movers-panel"><div className="panel-heading"><div><h2>Recent movers</h2><p>First-day performance</p></div><button className="period-select">1D <ChevronDown size={12} /></button></div><div className="mover-row"><span className="company-logo logo-5">F</span><span className="mover-name"><b>Fable Studio</b><small>FABL · NYSE</small></span><span className="mover-return up"><ArrowUpRight size={13} />42.7%</span></div><div className="mover-row"><span className="company-logo logo-4">C</span><span className="mover-name"><b>Cedar Finance</b><small>CEDR · NASDAQ</small></span><span className="mover-return up"><ArrowUpRight size={13} />18.4%</span></div><div className="mover-row"><span className="company-logo logo-2">H</span><span className="mover-name"><b>Harbor Cloud</b><small>HBRD · NASDAQ</small></span><span className="mover-return down"><ArrowDownRight size={13} />−4.2%</span></div></div></div></section>
-    <div className="data-note"><Clock3 size={13} /> Sample interface data · Connect a data provider to view live IPO information <ArrowUpRight size={12} /></div>
+    <section className="insight-banner"><span className="insight-icon"><Sparkles size={17} /></span><div><strong>Data status</strong><p>{statusMessage}</p></div></section>
+    <section className="panel listings-panel">
+      <div className="panel-heading"><div><h2>Latest SEC filings</h2><p>Recent registration statements, newest first.</p></div><a className="text-link" href="https://www.sec.gov/edgar/search/">Open SEC EDGAR <ArrowUpRight size={14} /></a></div>
+      {data.filings.length > 0 ? <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>FORM</th><th>FILED</th><th>CIK</th><th /></tr></thead><tbody>{data.filings.map((filing, index) => { const companyName = filing.companyName ?? "Unknown company"; return <tr key={filing.id}><td><a className="company-cell" href={filing.filingUrl} target="_blank" rel="noreferrer"><span className={`company-logo logo-${index % 6}`}>{companyName[0] ?? "?"}</span><span><strong>{companyName}</strong><small>Open filing on SEC EDGAR</small></span></a></td><td><span className="status status-filed"><span className="status-dot" />{filing.formType}</span></td><td><span className="date-cell">{formatDate(filing.filedAt)}</span></td><td className="data-cell">{filing.cik}</td><td><a className="row-menu" href={filing.filingUrl} target="_blank" rel="noreferrer" aria-label={`Open ${companyName} SEC filing`}><ArrowUpRight size={16} /></a></td></tr>; })}</tbody></table></div> : <div className="filing-empty"><span><FileText size={17} /></span><div><strong>{data.status === "connected" ? "No recent filings" : "Live filing data isn’t available yet"}</strong><p>{data.status === "connected" ? "The database is connected. The importer will add records when it finds matching filings." : "Once the database connection is configured, this dashboard will load filings directly from Supabase."}</p></div></div>}
+      <div className="panel-footer"><span>Showing <b>{data.filings.length}</b> recent filings</span><span>{data.latestRun ? `Last import: ${data.latestRun.recordsRead} filings read` : "Waiting for first import"}</span></div>
+    </section>
+    <div className="data-note"><Clock3 size={13} /> Filing data is sourced from SEC EDGAR. Upcoming dates are shown only when entered in the database.</div>
   </div></AppShell>;
 }
