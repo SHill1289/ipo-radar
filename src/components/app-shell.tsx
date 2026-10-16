@@ -12,7 +12,8 @@ export function AppShell({ children, active = "Overview" }: { children: React.Re
   return <div className="app-frame">
     <aside className="sidebar">
       <Link className="brand" href="/" aria-label="IPO Radar home">
-        <Image className="ipo-radar-full-logo" src="/ipo-radar-logo.png" alt="IPO Radar" width={403} height={202} priority />
+        <Image className="ipo-radar-full-logo" src="/ipo-radar-logo.png" alt="IPO Radar" width={403} height={181} priority />
+        <span className="ipo-radar-compact" aria-hidden="true"><Image src="/ipo-radar-logo.png" alt="" width={403} height={181} priority /></span>
       </Link>
       <div className="workspace-switch"><span className="workspace-avatar">A</span><span className="workspace-copy"><strong>Personal workspace</strong><small>Free plan</small></span><ChevronDown size={15} /></div>
       <div className="nav-label">WORKSPACE</div>
@@ -24,8 +25,14 @@ export function AppShell({ children, active = "Overview" }: { children: React.Re
     <main className="main-area"><header className="topbar"><div className="breadcrumb">Workspace <span>/</span> <strong>{active}</strong></div><div className="topbar-actions"><button className="search-trigger"><Search size={15} />Search IPOs...<kbd><Command size={10} /> K</kbd></button><button className="icon-button" aria-label="Recent filings"><FileText size={17} /><i /></button><span className="topbar-divider" /><span className="market-indicator"><i /> Market open</span></div></header>{children}</main>
     <style>{`
       .sidebar .brand{display:block;height:auto;padding:0;margin:0 0 20px;box-sizing:border-box}
-      .ipo-radar-full-logo{display:block;width:100%;height:auto;max-width:100%;border-radius:8px}
-      @media(max-width:850px){.sidebar .brand{padding:0;margin:0 0 25px}}
+      .ipo-radar-full-logo{display:block;width:100%;height:auto;max-width:100%;border-radius:0}
+      .ipo-radar-compact{display:none}
+      @media(max-width:850px){
+        .sidebar .brand{width:48px;height:48px;padding:0;margin:0 0 25px}
+        .ipo-radar-full-logo{display:none}
+        .ipo-radar-compact{position:relative;display:block;width:48px;height:48px;overflow:hidden}
+        .ipo-radar-compact img{position:absolute;top:-7px;left:-5px;width:132px;height:auto;max-width:none}
+      }
     `}</style>
   </div>;
 }
