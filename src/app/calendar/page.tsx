@@ -1,8 +1,86 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
-import { upcomingListings } from "@/lib/demo-data";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { getCalendarOfferings } from "@/lib/ipo-pages-data";
+import { CalendarDays, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
-export default function CalendarPage() {
-  return <AppShell active="IPO calendar"><div className="page-wrap"><div className="page-heading"><div><div className="eyebrow">PIPELINE TRACKER</div><h1>IPO calendar</h1><p>Upcoming listings, filing dates, and pricing events.</p></div><button className="button button-primary"><Plus size={16} /> Track a company</button></div><div className="calendar-toolbar"><button className="button button-secondary"><ChevronLeft size={15} /> Previous</button><h2>October – November 2026</h2><button className="button button-secondary">Next <ChevronRight size={15} /></button><span className="toolbar-spacer" /><button className="button button-secondary">Month <ChevronRight size={14} /></button></div><div className="calendar-board"><div className="calendar-headings">{["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-cells">{Array.from({ length: 35 }, (_, index) => { const day = index - 2; const inMonth = day >= 1 && day <= 31; const events = inMonth && [16, 22, 28].includes(day); return <div className={`calendar-cell ${!inMonth ? "out-month" : ""} ${day === 15 ? "selected-day" : ""}`} key={index}><span>{day < 1 ? 30 + day : day > 31 ? day - 31 : day}</span>{events && <div className="calendar-event"><i />{day === 16 ? "Roadzen · Pricing" : day === 22 ? "Cerebras · Expected" : "Discord · Roadshow"}</div>}{day === 20 && <div className="calendar-event subtle-event"><i />Navan · Investor day</div>}</div>; })}</div></div><section className="panel calendar-list"><div className="panel-heading"><div><h2>Upcoming listings</h2><p>{upcomingListings.length} companies expected in the next 30 days</p></div><button className="filter-button">All statuses <ChevronRight size={13} /></button></div><div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>STATUS</th><th>EXPECTED DATE</th><th>PRICE RANGE</th><th>DEAL SIZE</th></tr></thead><tbody>{upcomingListings.map((ipo, i) => <tr key={ipo.ticker}><td><span className="company-cell"><span className={`company-logo logo-${i}`}>{ipo.company[0]}</span><span><strong>{ipo.company}</strong><small>{ipo.ticker} · {ipo.exchange}</small></span></span></td><td><StatusBadge status={ipo.status} /></td><td>{new Date(`${ipo.expectedDate}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td><td>{ipo.priceRange}</td><td>{ipo.dealSize}</td></tr>)}</tbody></table></div></section></div></AppShell>;
+const weekdayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const dateFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+
+function formatMoney(value: string | null) {
+  if (value === null) return "Not announced";
+  const amount = Number(value);
+  return Number.isFinite(amount) ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(amount) : "Not announced";
+}
+
+function formatPriceRange(low: string | null, high: string | null) {
+  if (low && high && low !== high) return `${formatMoney(low)}–${formatMoney(high)}`;
+  return formatMoney(low ?? high);
+}
+
+function monthKey(date: Date) {
+  return date.toISOString().slice(0, 7);
+}
+
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const params = await searchParams;
+  const requestedMonth = /^\d{4}-\d{2}$/.test(params.month ?? "") ? params.month as string : "";
+  const [yearValue, monthValue] = requestedMonth ? requestedMonth.split("-").map(Number) : [new Date().getUTCFullYear(), new Date().getUTCMonth() + 1];
+  const validMonth = monthValue >= 1 && monthValue <= 12 && yearValue >= 2000 && yearValue <= 2100;
+  const year = validMonth ? yearValue : new Date().getUTCFullYear();
+  const monthIndex = validMonth ? monthValue - 1 : new Date().getUTCMonth();
+  const start = new Date(Date.UTC(year, monthIndex, 1));
+  const end = new Date(Date.UTC(year, monthIndex + 1, 1));
+  const { state, offerings } = await getCalendarOfferings(start, end);
+  const offset = (start.getUTCDay() + 6) % 7;
+  const dayCount = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const cellCount = Math.ceil((offset + dayCount) / 7) * 7;
+  const gridStart = new Date(Date.UTC(year, monthIndex, 1 - offset));
+  const eventsByDay = new Map<string, typeof offerings>();
+  for (const offering of offerings) {
+    const key = offering.expectedDate.toISOString().slice(0, 10);
+    eventsByDay.set(key, [...(eventsByDay.get(key) ?? []), offering]);
+  }
+  const previous = monthKey(new Date(Date.UTC(year, monthIndex - 1, 1)));
+  const next = monthKey(new Date(Date.UTC(year, monthIndex + 1, 1)));
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  return <AppShell active="IPO calendar"><div className="page-wrap">
+    <div className="page-heading"><div><div className="eyebrow">PIPELINE TRACKER</div><h1>IPO calendar</h1><p>Expected listing dates recorded in the database.</p></div></div>
+    <div className="calendar-toolbar">
+      <Link className="button button-secondary" href={`/calendar?month=${previous}`}><ChevronLeft size={15} /> Previous</Link>
+      <h2>{monthFormatter.format(start)}</h2>
+      <Link className="button button-secondary" href={`/calendar?month=${next}`}>Next <ChevronRight size={15} /></Link>
+      <span className="toolbar-spacer" />
+      <span className="result-count">{offerings.length} dated offerings</span>
+    </div>
+    {state !== "connected" && <div className="panel filing-empty"><span><FileText size={19} /></span><div><strong>{state === "unconfigured" ? "Database setup needed" : "Calendar data unavailable"}</strong><p>{state === "unconfigured" ? "Configure the server database connection to load IPO dates." : "The calendar couldn’t load its data. Try again shortly."}</p></div></div>}
+    <div className="calendar-board">
+      <div className="calendar-headings">{weekdayLabels.map((day) => <span key={day}>{day}</span>)}</div>
+      <div className="calendar-cells">{Array.from({ length: cellCount }, (_, index) => {
+        const date = new Date(gridStart.getTime() + index * 86400000);
+        const dateKey = date.toISOString().slice(0, 10);
+        const inMonth = date.getUTCMonth() === monthIndex;
+        const dayEvents = eventsByDay.get(dateKey) ?? [];
+        return <div className={`calendar-cell ${!inMonth ? "out-month" : ""} ${dateKey === todayKey ? "selected-day" : ""}`} key={dateKey}>
+          <span>{date.getUTCDate()}</span>
+          {dayEvents.map((event) => <Link className="calendar-event" href={`/companies/${event.ticker ? event.ticker.toLowerCase() : event.companyId}`} key={event.id}>
+            <i />{event.companyName}{event.ticker ? ` · ${event.ticker}` : ""}
+          </Link>)}
+        </div>;
+      })}</div>
+    </div>
+    <section className="panel calendar-list">
+      <div className="panel-heading"><div><h2>Expected listings</h2><p>Offerings with dates recorded for {monthFormatter.format(start)}.</p></div><CalendarDays size={17} color="#9296a2" /></div>
+      <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>STATUS</th><th>EXPECTED DATE</th><th>PRICE RANGE</th><th>DEAL SIZE</th></tr></thead>
+        <tbody>{offerings.length ? offerings.map((offering) => <tr key={offering.id}>
+          <td><Link className="company-cell" href={`/companies/${offering.ticker ? offering.ticker.toLowerCase() : offering.companyId}`}><span className="company-logo">{offering.companyName[0]}</span><span><strong>{offering.companyName}</strong><small>{offering.ticker ?? "Ticker not announced"}</small></span></Link></td>
+          <td><StatusBadge status={offering.status} /></td><td>{dateFormatter.format(offering.expectedDate)}</td>
+          <td>{formatPriceRange(offering.priceLow, offering.priceHigh)}</td><td>{formatMoney(offering.dealSize)}</td>
+        </tr>) : <tr><td colSpan={5}>{state === "connected" ? "No expected listing dates are recorded for this month." : "No offering data available."}</td></tr>}</tbody>
+      </table></div>
+    </section>
+    <div className="data-note">Expected dates and offering details are shown only when recorded in the database.</div>
+  </div></AppShell>;
 }
