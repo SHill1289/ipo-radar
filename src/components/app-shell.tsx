@@ -4,7 +4,7 @@ import { Activity, CalendarDays, ChevronDown, CircleHelp, Command, FileText, Lay
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/calendar", label: "IPO calendar", icon: CalendarDays },
+  { href: "/calendar", label: "IPO calendar", icon: Activity },
   { href: "/companies", label: "Companies", icon: Activity },
 ];
 
@@ -13,7 +13,7 @@ export function AppShell({ children, active = "Overview" }: { children: React.Re
     <aside className="sidebar">
       <Link className="brand" href="/" aria-label="IPO Radar home">
         <Image className="ipo-radar-full-logo" src="/ipo-radar-logo.png" alt="IPO Radar" width={403} height={181} priority />
-        <span className="ipo-radar-compact" aria-hidden="true"><Image src="/ipo-radar-logo.png" alt="" width={403} height={181} priority /></span>
+        <span className="ipo-radar-compact" aria-hidden="true"><Image src="/ipo-radar-mark.png" alt="" width={164} height={152} priority /></span>
       </Link>
       <div className="workspace-switch"><span className="workspace-avatar">A</span><span className="workspace-copy"><strong>Personal workspace</strong><small>Free plan</small></span><ChevronDown size={15} /></div>
       <div className="nav-label">WORKSPACE</div>
@@ -30,8 +30,8 @@ export function AppShell({ children, active = "Overview" }: { children: React.Re
       @media(max-width:850px){
         .sidebar .brand{width:48px;height:48px;padding:0;margin:0 0 25px}
         .ipo-radar-full-logo{display:none}
-        .ipo-radar-compact{position:relative;display:block;width:48px;height:48px;overflow:hidden}
-        .ipo-radar-compact img{position:absolute;top:-7px;left:-5px;width:132px;height:auto;max-width:none}
+        .ipo-radar-compact{display:grid;width:48px;height:48px;place-items:center;overflow:hidden}
+        .ipo-radar-compact img{position:static;width:48px;height:auto;max-width:100%}
       }
     `}</style>
   </div>;
