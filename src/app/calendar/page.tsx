@@ -19,7 +19,7 @@ function formatPriceRange(low: string | null, high: string | null) {
   return formatMoney(low ?? high);
 }
 
-function monthKey(date: Date) {
+function companyProfilePath(companyId: string, secCik: string | null) {\n  return `/companies/${secCik ? `cik-${secCik}` : companyId}`;\n}\n\nfunction monthKey(date: Date) {
   return date.toISOString().slice(0, 7);
 }
 
@@ -65,7 +65,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         const dayEvents = eventsByDay.get(dateKey) ?? [];
         return <div className={`calendar-cell ${!inMonth ? "out-month" : ""} ${dateKey === todayKey ? "selected-day" : ""}`} key={dateKey}>
           <span>{date.getUTCDate()}</span>
-          {dayEvents.map((event) => <Link className="calendar-event" href={`/companies/${event.ticker ? event.ticker.toLowerCase() : event.companyId}`} key={event.id}>
+          {dayEvents.map((event) => <Link className="calendar-event" href={companyProfilePath(event.companyId, event.secCik)} key={event.id}>
             <i />{event.companyName}{event.ticker ? ` · ${event.ticker}` : ""}
           </Link>)}
         </div>;
@@ -75,7 +75,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <div className="panel-heading"><div><h2>Expected listings</h2><p>Offerings with dates recorded for {monthFormatter.format(start)}.</p></div><CalendarDays size={17} color="#9296a2" /></div>
       <div className="table-scroll"><table><thead><tr><th>COMPANY</th><th>STATUS</th><th>EXPECTED DATE</th><th>PRICE RANGE</th><th>DEAL SIZE</th></tr></thead>
         <tbody>{offerings.length ? offerings.map((offering) => <tr key={offering.id}>
-          <td><Link className="company-cell" href={`/companies/${offering.ticker ? offering.ticker.toLowerCase() : offering.companyId}`}><span className="company-logo">{offering.companyName[0]}</span><span><strong>{offering.companyName}</strong><small>{offering.ticker ?? "Ticker not announced"}</small></span></Link></td>
+          <td><Link className="company-cell" href={companyProfilePath(offering.companyId, offering.secCik)}><span className="company-logo">{offering.companyName[0]}</span><span><strong>{offering.companyName}</strong><small>{offering.ticker ?? "Ticker not announced"}</small></span></Link></td>
           <td><StatusBadge status={offering.status} /></td><td>{dateFormatter.format(offering.expectedDate)}</td>
           <td>{formatPriceRange(offering.priceLow, offering.priceHigh)}</td><td>{formatMoney(offering.dealSize)}</td>
         </tr>) : <tr><td colSpan={5}>{state === "connected" ? "No expected listing dates are recorded for this month." : "No offering data available."}</td></tr>}</tbody>
