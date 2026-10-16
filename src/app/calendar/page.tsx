@@ -19,7 +19,11 @@ function formatPriceRange(low: string | null, high: string | null) {
   return formatMoney(low ?? high);
 }
 
-function companyProfilePath(companyId: string, secCik: string | null) {\n  return `/companies/${secCik ? `cik-${secCik}` : companyId}`;\n}\n\nfunction monthKey(date: Date) {
+function companyProfilePath(companyId: string, secCik: string | null) {
+  return `/companies/${secCik ? `cik-${secCik}` : companyId}`;
+}
+
+function monthKey(date: Date) {
   return date.toISOString().slice(0, 7);
 }
 
