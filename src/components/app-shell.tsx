@@ -4,7 +4,7 @@ import { Activity, CalendarDays, ChevronDown, CircleHelp, Command, FileText, Lay
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/calendar", label: "IPO calendar", icon: Activity },
+  { href: "/calendar", label: "IPO calendar", icon: CalendarDays },
   { href: "/companies", label: "Companies", icon: Activity },
 ];
 
