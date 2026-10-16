@@ -55,6 +55,7 @@ export type CalendarOffering = {
   companyId: string;
   companyName: string;
   ticker: string | null;
+  secCik: string | null;
   status: IpoStatus;
   expectedDate: Date;
   priceLow: string | null;
@@ -207,6 +208,7 @@ export async function getCalendarOfferings(start: Date, end: Date): Promise<{ st
       companyId: schema.companies.id,
       companyName: schema.companies.name,
       ticker: schema.companies.ticker,
+      secCik: schema.companies.secCik,
       status: schema.offerings.status,
       expectedDate: schema.offerings.expectedDate,
       priceLow: schema.offerings.priceLow,
