@@ -29,7 +29,7 @@ function parseEntries(xml: string, formType: string): SecFilingRecord[] {
     const title = readTag(entry, "title");
     const updated = readTag(entry, "updated") ?? readTag(entry, "published");
     const summary = readTag(entry, "summary");
-    const accessionNumber = summary?.match(/Accession Number:\s*([0-9-]+)/i)?.[1];
+    const accessionNumber = summary?.match(/(?:Accession Number|AccNo):\s*([0-9-]+)/i)?.[1];
     const cikMatch = title?.match(/\((\d{7,10})\)/);
     const linkAttributes = [...entry.matchAll(/<link\b([^>]*)\/?\s*>/gi)].map((match) => match[1]);
     const link = linkAttributes.find((attributes) => readAttribute(attributes, "rel") === "alternate") ?? linkAttributes[0];
