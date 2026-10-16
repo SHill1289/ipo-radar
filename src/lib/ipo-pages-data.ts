@@ -29,6 +29,10 @@ export type CompanyOffering = {
   dealSize: string | null;
   leadUnderwriters: string[] | null;
   source: string;
+  sourceType: string | null;
+  sourceUrl: string | null;
+  reviewedAt: Date | null;
+  reviewedBy: string | null;
 };
 
 export type CompanyFiling = {
@@ -171,6 +175,10 @@ export async function getCompanyDetail(slug: string): Promise<CompanyDetailData>
         dealSize: schema.offerings.dealSize,
         leadUnderwriters: schema.offerings.leadUnderwriters,
         source: schema.offerings.source,
+        sourceType: schema.offerings.sourceType,
+        sourceUrl: schema.offerings.sourceUrl,
+        reviewedAt: schema.offerings.reviewedAt,
+        reviewedBy: schema.offerings.reviewedBy,
       }).from(schema.offerings)
         .where(operators.eq(schema.offerings.companyId, company.id))
         .orderBy(operators.desc(schema.offerings.updatedAt))

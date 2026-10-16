@@ -1,4 +1,5 @@
-import { pgEnum, pgTable, text, timestamp, uuid, numeric, integer, jsonb, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, uuid, numeric, integer, jsonb, uniqueIndex, index, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const ipoStatus = pgEnum("ipo_status", ["rumored", "filed", "upcoming", "withdrawn", "completed"]);
 export const companies = pgTable("companies", {
@@ -17,9 +18,24 @@ export const offerings = pgTable("offerings", {
   priceHigh: numeric("price_high", { precision: 12, scale: 2 }), finalPrice: numeric("final_price", { precision: 12, scale: 2 }),
   dealSize: numeric("deal_size", { precision: 20, scale: 2 }), leadUnderwriters: text("lead_underwriters").array(),
   secAccession: text("sec_accession"), source: text("source").notNull().default("manual"),
+  sourceType: text("source_type"), sourceUrl: text("source_url"), sourceCheckedAt: timestamp("source_checked_at", { withTimezone: true }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }), reviewedBy: text("reviewed_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [index("offerings_expected_date_idx").on(table.expectedDate), index("offerings_status_idx").on(table.status)]);
+
+export const offeringReviews = pgTable("offering_reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  offeringId: uuid("offering_id").notNull().references(() => offerings.id, { onDelete: "cascade" }),
+  companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  reviewerEmail: text("reviewer_email").notNull(), sourceType: text("source_type").notNull(), sourceUrl: text("source_url").notNull(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }).defaultNow().notNull(),
+  valuesSnapshot: jsonb("values_snapshot").notNull(), notes: text("notes"),
+}, (table) => [
+  check("offering_reviews_source_type_check", sql`${table.sourceType} in ('sec_filing', 'issuer_announcement')`),
+  index("offering_reviews_company_reviewed_idx").on(table.companyId, table.reviewedAt),
+  index("offering_reviews_offering_reviewed_idx").on(table.offeringId, table.reviewedAt),
+]);
 
 export const secFilings = pgTable("sec_filings", {
   id: uuid("id").defaultRandom().primaryKey(), companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),

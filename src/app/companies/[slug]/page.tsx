@@ -47,14 +47,14 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
       <section className="panel detail-panel"><div className="panel-heading"><div><h2>Offering overview</h2><p>Confirmed details recorded for this company</p></div>
         {offering && <StatusBadge status={offering.status} />}
       </div>
-        {offering ? <div className="overview-grid">
+        {offering ? <><div className="overview-grid">
           <div><small>EXPECTED LISTING</small><strong>{offering.expectedDate ? dateFormatter.format(offering.expectedDate) : "Not announced"}</strong></div>
           <div><small>PRICE RANGE</small><strong>{formatPriceRange(offering.priceLow, offering.priceHigh)}</strong></div>
           <div><small>DEAL SIZE</small><strong>{formatMoney(offering.dealSize)}</strong></div>
           <div><small>SHARES OFFERED</small><strong>{offering.sharesOffered ? Number(offering.sharesOffered).toLocaleString("en-US") : "Not announced"}</strong></div>
           <div><small>EXCHANGE</small><strong>{company.exchange ?? "Not announced"}</strong></div>
           <div><small>LEAD UNDERWRITERS</small><strong>{offering.leadUnderwriters?.join(", ") || "Not announced"}</strong></div>
-        </div> : <div className="filing-empty"><span><FileText size={19} /></span><div><strong>No offering details recorded</strong><p>Price range and expected listing date will appear when confirmed data is added.</p></div></div>}
+        </div>{offering.sourceUrl ? <div className="source-attribution"><span>Source checked {offering.reviewedAt ? shortDateFormatter.format(offering.reviewedAt) : "date unavailable"}</span><a className="text-link" href={offering.sourceUrl} target="_blank" rel="noreferrer">{offering.sourceType === "sec_filing" ? "SEC filing source" : "Issuer announcement source"} <ExternalLink size={12} /></a></div> : null}</> : <div className="filing-empty"><span><FileText size={19} /></span><div><strong>No offering details recorded</strong><p>Price range and expected listing date will appear when confirmed data is added.</p></div></div>}
       </section>
       <section className="panel detail-panel"><div className="panel-heading"><div><h2>SEC filings</h2><p>Registration statements and amendments</p></div>
         {company.secCik && <a className="text-link" href={`https://www.sec.gov/edgar/browse/?CIK=${company.secCik}`} target="_blank" rel="noreferrer">Open SEC <ExternalLink size={13} /></a>}
