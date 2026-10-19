@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, CalendarDays, ChevronDown, CircleHelp, Command, FileText, LayoutDashboard, Search, Settings2 } from "lucide-react";
+import { Activity, CalendarDays, ChevronDown, CircleHelp, Command, FileText, LayoutDashboard, Search, Settings2, ShieldCheck } from "lucide-react";
 
 const nav = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/calendar", label: "IPO calendar", icon: CalendarDays },
   { href: "/companies", label: "Companies", icon: Activity },
+  { href: "/review", label: "Review IPO details", icon: ShieldCheck },
 ];
 
 export function AppShell({ children, active = "Overview" }: { children: React.ReactNode; active?: string }) {
