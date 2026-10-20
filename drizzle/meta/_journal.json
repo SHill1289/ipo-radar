@@ -2,7 +2,33 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    { "idx": 0, "version": "7", "when": 1792080000000, "tag": "0000_ipo_radar", "breakpoints": true },
-    { "idx": 1, "version": "7", "when": 1792195200000, "tag": "0001_sourced_offering_reviews", "breakpoints": true }
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792080000000,
+      "tag": "0000_ipo_radar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792195200000,
+      "tag": "0001_sourced_offering_reviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792525176294,
+      "tag": "0002_rapid_adam_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792525265390,
+      "tag": "0003_optimal_scourge",
+      "breakpoints": true
+    }
   ]
 }

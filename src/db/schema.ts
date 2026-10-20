@@ -41,8 +41,15 @@ export const secFilings = pgTable("sec_filings", {
   id: uuid("id").defaultRandom().primaryKey(), companyId: uuid("company_id").references(() => companies.id, { onDelete: "set null" }),
   cik: text("cik").notNull(), accessionNumber: text("accession_number").notNull(), formType: text("form_type").notNull(),
   filedAt: timestamp("filed_at", { withTimezone: true }).notNull(), filingUrl: text("filing_url").notNull(),
-  raw: jsonb("raw"), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (table) => [uniqueIndex("sec_filings_accession_unique").on(table.accessionNumber), index("sec_filings_cik_filed_idx").on(table.cik, table.filedAt)]);
+  raw: jsonb("raw"), extractionStatus: text("extraction_status").default("pending").notNull(),
+  extractedAt: timestamp("extracted_at", { withTimezone: true }), extractionError: text("extraction_error"),
+  extractedData: jsonb("extracted_data"), createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("sec_filings_accession_unique").on(table.accessionNumber),
+  index("sec_filings_cik_filed_idx").on(table.cik, table.filedAt),
+  index("sec_filings_extraction_idx").on(table.extractionStatus, table.filedAt),
+  check("sec_filings_extraction_status_check", sql`${table.extractionStatus} in ('pending', 'completed', 'failed')`),
+]);
 
 export const marketSnapshots = pgTable("market_snapshots", {
   id: uuid("id").defaultRandom().primaryKey(), companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),

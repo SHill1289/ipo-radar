@@ -13,7 +13,7 @@ export type DashboardData = {
   filingCount: number;
   companyCount: number;
   upcomingCount: number;
-  latestRun: { status: string; finishedAt: Date | null; recordsRead: number } | null;
+  latestRun: { status: string; finishedAt: Date | null; recordsRead: number; metadata: unknown } | null;
 };
 
 const emptyDashboard = (status: DashboardData["status"]): DashboardData => ({
@@ -66,6 +66,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         status: schema.ingestionRuns.status,
         finishedAt: schema.ingestionRuns.finishedAt,
         recordsRead: schema.ingestionRuns.recordsRead,
+        metadata: schema.ingestionRuns.metadata,
       })
         .from(schema.ingestionRuns)
         .orderBy(operators.desc(schema.ingestionRuns.startedAt))

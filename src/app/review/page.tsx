@@ -36,7 +36,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const latestFiling = new Map<string, (typeof filingRows)[number]>();
   for (const filing of filingRows) if (filing.companyId && !latestFiling.has(filing.companyId)) latestFiling.set(filing.companyId, filing);
   return <AppShell active="Review IPO details"><div className="page-wrap review-wrap">
-    <div className="page-heading"><div><div className="eyebrow">PRIVATE · SOURCED DATA</div><h1>Review IPO details</h1><p>Update dates and offering terms only when a primary source supports them.</p></div>
+    <div className="page-heading"><div><div className="eyebrow">PRIVATE · SOURCED DATA</div><h1>Automated SEC filing intake</h1><p>IPO records populate from SEC filings automatically. Use this workspace to resolve exceptions or verify important changes—not for routine data entry.</p></div>
       <form action="/auth/signout" method="post"><button className="button button-secondary" type="submit">Sign out</button></form>
     </div>
     <section className="review-notice"><strong>Primary-source rule</strong><span>Every saved update requires a public SEC filing or issuer-announcement URL. Each save adds a dated audit entry; it never implies an unconfirmed date.</span></section>
@@ -46,7 +46,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     {params.message === "prices" ? <div className="review-feedback" role="alert">The lower end of the price range must not exceed the upper end.</div> : null}
     {params.message === "company" ? <div className="review-feedback" role="alert">That company could not be found. Refresh the review queue.</div> : null}
     {params.message === "save-error" ? <div className="review-feedback" role="alert">The update could not be saved. Please try again.</div> : null}
-    <div className="review-queue-heading"><div><h2>Companies from SEC filings</h2><p>{companyRows.length} companies · newest filings shown where available</p></div><span>{user.email}</span></div>
+    <div className="review-queue-heading"><div><h2>Automated filing coverage</h2><p>{companyRows.length} companies · extraction failures are retried on a later import</p></div><span>{user.email}</span></div>
     <div className="review-queue">{companyRows.map((company) => {
       const offering = latestOffering.get(company.id);
       const filing = latestFiling.get(company.id);
@@ -54,7 +54,9 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
       const selected = params.company === `cik-${company.secCik}`;
       return <details className="panel review-card" key={company.id} open={selected}>
         <summary><span><strong>{company.name}</strong><small>{company.ticker ?? "Ticker not announced"}{company.secCik ? ` · CIK ${company.secCik}` : ""}</small></span>
-          <span className="review-summary-meta">{offering ? <StatusBadge status={offering.status} /> : <span className="unreviewed-badge">Needs review</span>}{filing ? <small>Latest: {filing.formType} · {formatReviewedAt(filing.filedAt)}</small> : null}</span>
+          <span className="review-summary-meta">{offering?.source === "sec_auto" && !offering.reviewedAt
+            ? <span className="unreviewed-badge">Auto-imported · not independently verified</span>
+            : offering ? <StatusBadge status={offering.status} /> : <span className="unreviewed-badge">Filing detected</span>}{filing ? <small>Latest: {filing.formType} · {formatReviewedAt(filing.filedAt)}</small> : null}</span>
         </summary>
         {filing ? <div className="review-filing-link"><a className="text-link" href={filing.filingUrl} target="_blank" rel="noreferrer">Open latest {filing.formType} on SEC EDGAR</a></div> : null}
         <form action={saveOfferingReview} className="review-form review-fields">

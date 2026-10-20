@@ -9,11 +9,11 @@ IPO Radar is a Next.js and TypeScript IPO intelligence dashboard. The dashboard,
 3. Run `npm ci` and `npm run dev`.
 4. Open `http://localhost:3000`.
 
-The overview displays an honest setup or no-filings state if the database is unavailable or no matching filings have been ingested. PostgreSQL is required for the overview, migrations, and ingestion. Set a descriptive `SEC_USER_AGENT` before running `npm run ingest`. SEC ingestion discovers recent registration filings and stores companies, filings, and ingestion runs; mapping SEC records to IPO offerings is not yet implemented.
+The overview displays an honest setup or no-filings state if the database is unavailable or no matching filings have been ingested. PostgreSQL is required for the overview, migrations, and ingestion. Set a descriptive `SEC_USER_AGENT` before running `npm run ingest`. SEC ingestion discovers recent registration filings, stores companies and filings, fetches the primary S-1/F-1 document, and extracts price-range/share-count candidates when the filing text contains clear cover-page cues. It creates or refreshes an offering only when the filing's cover page contains IPO-specific language, and never invents an expected listing date. These machine-extracted values are labeled as not independently verified; admin-reviewed records are protected from automatic overwrites. Extraction failures are recorded and retried on later scheduled runs.
 
 ## Free personal hosting
 
-The intended low-cost personal setup is Vercel Hobby for the Next.js site, Supabase Free for PostgreSQL, and GitHub Actions for scheduled SEC ingestion. Vercel Hobby cron is limited to once daily, so ingestion runs from `.github/workflows/sec-ingest.yml` instead. Its five UTC schedules roughly align with 9 a.m., noon, 3 p.m., 6 p.m., and 9 p.m. Eastern during daylight saving time; adjust them by one hour after the seasonal clock change if exact local times matter.
+The intended low-cost personal setup is Vercel Hobby for the Next.js site, Supabase Free for PostgreSQL, and GitHub Actions for scheduled SEC ingestion. Vercel Hobby cron is limited to once daily, so ingestion runs from `.github/workflows/sec-ingest.yml` instead. Its five UTC schedules roughly align with 9 a.m., noon, 3 p.m., 6 p.m., and 9 p.m. Eastern during daylight saving time; adjust them by one hour after the seasonal clock change if exact local times matter. Each scheduled or manual import applies pending Drizzle migrations before ingestion using the existing GitHub `DATABASE_URL` secret.
 
 After creating a Supabase project, set the GitHub repository Actions secret `DATABASE_URL` to its PostgreSQL connection string and the repository Actions variable `SEC_USER_AGENT` to a descriptive identifier with a monitored contact. Apply the schema to the Supabase database with `npm run db:migrate` before enabling ingestion. Set the same `DATABASE_URL` as a server-side Production environment variable in Vercel for the overview to query Supabase. Redeploy after changing Vercel variables. Do not commit credentials.
 
@@ -23,11 +23,11 @@ The `/review` area uses Supabase Auth email links and permits only the address i
 
 ## Database
 
-The Drizzle schema is in `src/db/schema.ts`. It covers companies, offerings, SEC filings, market snapshots, and ingestion runs. Apply the checked-in migration with `npm run db:migrate` after configuring `DATABASE_URL`.
+The Drizzle schema is in `src/db/schema.ts`. It covers companies, offerings, SEC filings and their extraction status/results, market snapshots, and ingestion runs. Apply the checked-in migrations with `npm run db:migrate` after configuring `DATABASE_URL`.
 
 ## Data providers
 
-`src/providers/types.ts` defines SEC and market quote boundaries. The SEC latest-filings adapter discovers registration filings using the SEC filings feed and requires a descriptive User-Agent. Market data is deliberately disabled until a vendor and usage terms are selected. Credentials belong in environment variables and must never be committed.
+`src/providers/types.ts` defines SEC and market quote boundaries. SEC adapters discover current registration filings and extract conservative IPO terms from the primary registration document using a descriptive User-Agent, with requests rate-limited below the SEC's published maximum. Automated extraction is source-backed but is not a substitute for independent verification. Market data is deliberately disabled until a vendor and usage terms are selected. Credentials belong in environment variables and must never be committed.
 
 ## Routes
 
@@ -40,4 +40,4 @@ The Drizzle schema is in `src/db/schema.ts`. It covers companies, offerings, SEC
 
 ## Before public launch
 
-Add company matching and idempotent offering upserts, choose a market data provider, add user-owned watchlists, and review data licensing and source attribution requirements.
+Improve structured-field extraction and issuer/underwriter corroboration, choose a market data provider, add user-owned watchlists, and review data licensing and source attribution requirements.
