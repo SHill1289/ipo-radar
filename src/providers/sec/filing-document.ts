@@ -1,10 +1,8 @@
 import type { SecFilingRecord } from "@/providers/types";
 
-type FilingIndex = {
-  directory?: { item?: Array<{ name?: string; type?: string }> };
-};
-
 const MAX_DOCUMENT_BYTES = 1_000_000;
+const SEC_ORIGIN = "https://www.sec.gov";
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 export type ExtractedOfferingTerms = {
   documentUrl: string;
@@ -31,19 +29,41 @@ function decodeCodePoint(value: number) {
   return Number.isInteger(value) && value >= 0 && value <= 0x10ffff ? String.fromCodePoint(value) : " ";
 }
 
-function filingDocumentUrl(filing: SecFilingRecord, index: FilingIndex) {
-  const indexUrl = new URL(filing.filingUrl);
-  if (indexUrl.hostname !== "www.sec.gov" && indexUrl.hostname !== "sec.gov") {
-    throw new Error("SEC filing URL must use sec.gov.");
+function filingIndexUrl(filing: SecFilingRecord) {
+  const cik = filing.cik.replace(/\D/g, "");
+  const accession = filing.accessionNumber;
+  if (!/^\d{1,10}$/.test(cik) || !/^\d{10}-\d{2}-\d{6}$/.test(accession)) {
+    throw new Error("SEC filing identifiers have an unsupported format.");
   }
-  const jsonUrl = new URL(indexUrl);
-  jsonUrl.pathname = jsonUrl.pathname.replace(/-index\.htm(l)?$/i, "-index.json");
-  if (jsonUrl.pathname === indexUrl.pathname) throw new Error("SEC filing index URL has an unsupported format.");
+  const accessionDirectory = accession.replaceAll("-", "");
+  return new URL(
+    `/Archives/edgar/data/${Number(cik)}/${accessionDirectory}/${accession}-index.htm`,
+    SEC_ORIGIN,
+  );
+}
 
-  const documents = index.directory?.item ?? [];
-  const primary = documents.find((item) => item.type?.toUpperCase() === filing.formType.toUpperCase() && /\.html?$/i.test(item.name ?? ""));
-  if (!primary?.name) throw new Error("The SEC filing index did not list a primary registration document.");
-  return new URL(encodeURIComponent(primary.name), indexUrl).toString();
+function toPlainText(value: string) {
+  return decodeHtml(value.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+}
+
+function primaryDocumentUrl(html: string, filing: SecFilingRecord, indexUrl: URL) {
+  const rows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)];
+  for (const [, row] of rows) {
+    const cells = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map((match) => toPlainText(match[1]));
+    if (!cells.some((cell) => cell.toUpperCase() === filing.formType.toUpperCase())) continue;
+
+    const href = [...row.matchAll(/\bhref\s*=\s*(["'])(.*?)\1/gi)]
+      .map((match) => decodeHtml(match[2]))
+      .find((value) => /\.html?$/i.test(new URL(value, indexUrl).pathname));
+    if (!href) continue;
+
+    const documentUrl = new URL(href, indexUrl);
+    if (documentUrl.hostname !== "www.sec.gov" && documentUrl.hostname !== "sec.gov") {
+      throw new Error("SEC registration document URL must use sec.gov.");
+    }
+    return documentUrl;
+  }
+  throw new Error("The SEC filing index did not list a primary registration document.");
 }
 
 function toText(html: string) {
@@ -139,29 +159,27 @@ export class SecFilingDocumentProvider {
   constructor(private readonly userAgent: string) {}
 
   private async request(url: URL, accept: string) {
-    const wait = Math.max(0, 250 - (Date.now() - this.lastRequestAt));
-    if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
-    this.lastRequestAt = Date.now();
-    return fetch(url, {
-      headers: { "User-Agent": this.userAgent, Accept: accept },
-      cache: "no-store",
-    });
+    for (let attempt = 0; ; attempt += 1) {
+      const wait = Math.max(0, 250 - (Date.now() - this.lastRequestAt));
+      if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+      this.lastRequestAt = Date.now();
+      const response = await fetch(url, {
+        headers: { "User-Agent": this.userAgent, Accept: accept },
+        cache: "no-store",
+      });
+      if (!RETRYABLE_STATUSES.has(response.status) || attempt >= 2) return response;
+      await response.body?.cancel();
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
   }
 
   async extractOfferingTerms(filing: SecFilingRecord): Promise<ExtractedOfferingTerms> {
-    const indexUrl = new URL(filing.filingUrl);
-    if (indexUrl.hostname !== "www.sec.gov" && indexUrl.hostname !== "sec.gov") {
-      throw new Error("SEC filing URL must use sec.gov.");
-    }
-    indexUrl.pathname = indexUrl.pathname.replace(/-index\.htm(l)?$/i, "-index.json");
-    if (indexUrl.pathname === new URL(filing.filingUrl).pathname) throw new Error("SEC filing index URL has an unsupported format.");
-
-    const indexResponse = await this.request(indexUrl, "application/json");
+    const indexUrl = filingIndexUrl(filing);
+    const indexResponse = await this.request(indexUrl, "text/html");
     if (!indexResponse.ok) throw new Error("SEC filing index request failed with status " + indexResponse.status + ".");
-    const index = await indexResponse.json() as FilingIndex;
-    const documentUrl = filingDocumentUrl(filing, index);
-    const documentResponse = await this.request(new URL(documentUrl), "text/html");
+    const documentUrl = primaryDocumentUrl(await indexResponse.text(), filing, indexUrl);
+    const documentResponse = await this.request(documentUrl, "text/html");
     if (!documentResponse.ok) throw new Error("SEC registration document request failed with status " + documentResponse.status + ".");
-    return extractOfferingTerms(await readDocumentPrefix(documentResponse), documentUrl);
+    return extractOfferingTerms(await readDocumentPrefix(documentResponse), documentUrl.toString());
   }
 }
