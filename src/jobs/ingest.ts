@@ -108,7 +108,7 @@ async function main() {
         }).where(eq(secFilings.id, filing.id));
         extractedCount += 1;
 
-        if (!filing.companyId || newestFilingByCompany.get(filing.companyId)?.accessionNumber !== filing.accessionNumber) continue;
+        if (!terms.isIpoCandidate || !filing.companyId || newestFilingByCompany.get(filing.companyId)?.accessionNumber !== filing.accessionNumber) continue;
         const [existingOffering] = await db.select({
           id: offerings.id,
           reviewedAt: offerings.reviewedAt,

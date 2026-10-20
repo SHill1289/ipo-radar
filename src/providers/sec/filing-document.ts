@@ -8,6 +8,7 @@ const MAX_DOCUMENT_BYTES = 1_000_000;
 
 export type ExtractedOfferingTerms = {
   documentUrl: string;
+  isIpoCandidate: boolean;
   priceLow: string | null;
   priceHigh: string | null;
   sharesOffered: string | null;
@@ -116,12 +117,15 @@ export function extractOfferingTerms(html: string, documentUrl: string): Extract
   const coverText = toText(html).slice(0, 60_000);
   const price = parsePriceRange(coverText);
   const sharesOffered = parseShares(coverText);
+  const isIpoCandidate = /\binitial public offering\b/i.test(coverText)
+    || /\bwe are offering\b.{0,180}\b(?:shares|ordinary shares)\b/i.test(coverText);
   const extractedFields = [
     ...(price ? ["priceLow", "priceHigh"] : []),
     ...(sharesOffered ? ["sharesOffered"] : []),
   ];
   return {
     documentUrl,
+    isIpoCandidate,
     priceLow: price?.low ?? null,
     priceHigh: price?.high ?? null,
     sharesOffered,
