@@ -30,5 +30,6 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --no-audit --no-fund
+      - run: npm run db:baseline
       - run: npm run db:migrate
       - run: npm run ingest
