@@ -25,7 +25,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
     db.select({ id: schema.companies.id, name: schema.companies.name, ticker: schema.companies.ticker, secCik: schema.companies.secCik })
       .from(schema.companies).orderBy(schema.companies.name).limit(500),
     db.select().from(schema.offerings).orderBy(desc(schema.offerings.updatedAt)).limit(1000),
-    db.select({ companyId: schema.secFilings.companyId, formType: schema.secFilings.formType, filedAt: schema.secFilings.filedAt, filingUrl: schema.secFilings.filingUrl, extractionStatus: schema.secFilings.extractionStatus, extractionError: schema.secFilings.extractionError })
+    db.select({ companyId: schema.secFilings.companyId, formType: schema.secFilings.formType, filedAt: schema.secFilings.filedAt, filingUrl: schema.secFilings.filingUrl })
       .from(schema.secFilings).where(isNotNull(schema.secFilings.companyId)).orderBy(desc(schema.secFilings.filedAt)).limit(2000),
     db.select({ companyId: schema.offeringReviews.companyId, sourceType: schema.offeringReviews.sourceType, sourceUrl: schema.offeringReviews.sourceUrl, reviewedAt: schema.offeringReviews.reviewedAt, reviewerEmail: schema.offeringReviews.reviewerEmail, valuesSnapshot: schema.offeringReviews.valuesSnapshot })
       .from(schema.offeringReviews).orderBy(desc(schema.offeringReviews.reviewedAt)).limit(500),
@@ -58,7 +58,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
             ? <span className="unreviewed-badge">Auto-imported · not independently verified</span>
             : offering ? <StatusBadge status={offering.status} /> : <span className="unreviewed-badge">Filing detected</span>}{filing ? <small>Latest: {filing.formType} · {formatReviewedAt(filing.filedAt)}</small> : null}</span>
         </summary>
-        {filing ? <div className="review-filing-link"><a className="text-link" href={filing.filingUrl} target="_blank" rel="noreferrer">Open latest {filing.formType} on SEC EDGAR</a>{filing.extractionStatus === "failed" ? <small role="status">The filing could not be extracted yet and will be retried automatically. {filing.extractionError ? `Details: ${filing.extractionError}` : ""}</small> : filing.extractionStatus === "completed" ? <small>SEC document extraction complete; blank values were not found with sufficient confidence.</small> : <small>SEC document extraction is pending.</small>}</div> : null}
+        {filing ? <div className="review-filing-link"><a className="text-link" href={filing.filingUrl} target="_blank" rel="noreferrer">Open latest {filing.formType} on SEC EDGAR</a></div> : null}
         <form action={saveOfferingReview} className="review-form review-fields">
           <input type="hidden" name="companyId" value={company.id} />
           <label>Status<select name="status" defaultValue={offering?.status ?? "filed"}><option value="rumored">Rumored</option><option value="filed">Filed</option><option value="upcoming">Upcoming</option><option value="withdrawn">Withdrawn</option><option value="completed">Completed</option></select></label>

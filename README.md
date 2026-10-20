@@ -13,7 +13,7 @@ The overview displays an honest setup or no-filings state if the database is una
 
 ## Free personal hosting
 
-The intended low-cost personal setup is Vercel Hobby for the Next.js site, Supabase Free for PostgreSQL, and GitHub Actions for scheduled SEC ingestion. Vercel Hobby cron is limited to once daily, so ingestion runs from `.github/workflows/sec-ingest.yml` instead. Its five UTC schedules roughly align with 9 a.m., noon, 3 p.m., 6 p.m., and 9 p.m. Eastern during daylight saving time; adjust them by one hour after the seasonal clock change if exact local times matter.
+The intended low-cost personal setup is Vercel Hobby for the Next.js site, Supabase Free for PostgreSQL, and GitHub Actions for scheduled SEC ingestion. Vercel Hobby cron is limited to once daily, so ingestion runs from `.github/workflows/sec-ingest.yml` instead. Its five UTC schedules roughly align with 9 a.m., noon, 3 p.m., 6 p.m., and 9 p.m. Eastern during daylight saving time; adjust them by one hour after the seasonal clock change if exact local times matter. Each scheduled or manual import applies pending Drizzle migrations before ingestion using the existing GitHub `DATABASE_URL` secret.
 
 After creating a Supabase project, set the GitHub repository Actions secret `DATABASE_URL` to its PostgreSQL connection string and the repository Actions variable `SEC_USER_AGENT` to a descriptive identifier with a monitored contact. Apply the schema to the Supabase database with `npm run db:migrate` before enabling ingestion. Set the same `DATABASE_URL` as a server-side Production environment variable in Vercel for the overview to query Supabase. Redeploy after changing Vercel variables. Do not commit credentials.
 
