@@ -31,6 +31,7 @@ export type CompanyOffering = {
   source: string;
   sourceType: string | null;
   sourceUrl: string | null;
+  sourceCheckedAt: Date | null;
   reviewedAt: Date | null;
   reviewedBy: string | null;
 };
@@ -177,6 +178,7 @@ export async function getCompanyDetail(slug: string): Promise<CompanyDetailData>
         source: schema.offerings.source,
         sourceType: schema.offerings.sourceType,
         sourceUrl: schema.offerings.sourceUrl,
+        sourceCheckedAt: schema.offerings.sourceCheckedAt,
         reviewedAt: schema.offerings.reviewedAt,
         reviewedBy: schema.offerings.reviewedBy,
       }).from(schema.offerings)

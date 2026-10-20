@@ -1,0 +1,2 @@
+CREATE INDEX "sec_filings_extraction_idx" ON "sec_filings" USING btree ("extraction_status","filed_at");--> statement-breakpoint
+ALTER TABLE "sec_filings" ADD CONSTRAINT "sec_filings_extraction_status_check" CHECK ("sec_filings"."extraction_status" in ('pending', 'completed', 'failed'));

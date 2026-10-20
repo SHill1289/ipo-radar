@@ -44,7 +44,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
       {website && <a className="button button-secondary" href={website} target="_blank" rel="noreferrer">Website <ExternalLink size={13} /></a>}
     </section>
     <div className="detail-grid"><div className="detail-main">
-      <section className="panel detail-panel"><div className="panel-heading"><div><h2>Offering overview</h2><p>Confirmed details recorded for this company</p></div>
+      <section className="panel detail-panel"><div className="panel-heading"><div><h2>Offering overview</h2><p>{offering?.source === "sec_auto" ? "Extracted from the latest SEC registration filing; machine-parsed values are not independently verified." : "Confirmed details recorded for this company"}</p></div>
         {offering && <StatusBadge status={offering.status} />}
       </div>
         {offering ? <><div className="overview-grid">
@@ -54,7 +54,9 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
           <div><small>SHARES OFFERED</small><strong>{offering.sharesOffered ? Number(offering.sharesOffered).toLocaleString("en-US") : "Not announced"}</strong></div>
           <div><small>EXCHANGE</small><strong>{company.exchange ?? "Not announced"}</strong></div>
           <div><small>LEAD UNDERWRITERS</small><strong>{offering.leadUnderwriters?.join(", ") || "Not announced"}</strong></div>
-        </div>{offering.sourceUrl ? <div className="source-attribution"><span>Source checked {offering.reviewedAt ? shortDateFormatter.format(offering.reviewedAt) : "date unavailable"}</span><a className="text-link" href={offering.sourceUrl} target="_blank" rel="noreferrer">{offering.sourceType === "sec_filing" ? "SEC filing source" : "Issuer announcement source"} <ExternalLink size={12} /></a></div> : null}</> : <div className="filing-empty"><span><FileText size={19} /></span><div><strong>No offering details recorded</strong><p>Price range and expected listing date will appear when confirmed data is added.</p></div></div>}
+        </div>{offering.sourceUrl ? <div className="source-attribution"><span>{offering.source === "sec_auto"
+          ? `SEC-extracted ${offering.sourceCheckedAt ? shortDateFormatter.format(offering.sourceCheckedAt) : ""} · not independently verified`
+          : `Source reviewed ${offering.reviewedAt ? shortDateFormatter.format(offering.reviewedAt) : "date unavailable"}`}</span><a className="text-link" href={offering.sourceUrl} target="_blank" rel="noreferrer">{offering.sourceType === "sec_filing" ? "SEC filing source" : "Issuer announcement source"} <ExternalLink size={12} /></a></div> : null}</> : <div className="filing-empty"><span><FileText size={19} /></span><div><strong>No offering details recorded</strong><p>Price range and expected listing date will appear when confirmed data is added.</p></div></div>}
       </section>
       <section className="panel detail-panel"><div className="panel-heading"><div><h2>SEC filings</h2><p>Registration statements and amendments</p></div>
         {company.secCik && <a className="text-link" href={`https://www.sec.gov/edgar/browse/?CIK=${company.secCik}`} target="_blank" rel="noreferrer">Open SEC <ExternalLink size={13} /></a>}
