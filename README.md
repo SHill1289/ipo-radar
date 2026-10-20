@@ -19,7 +19,7 @@ After creating a Supabase project, set the GitHub repository Actions secret `DAT
 
 ## Private offering review
 
-The `/review` area uses Supabase Auth email links and permits only the address in `IPO_RADAR_ADMIN_EMAIL`. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `IPO_RADAR_ADMIN_EMAIL`, and `NEXT_PUBLIC_SITE_URL` in Vercel and local development. The configured reviewer must already exist in Supabase Auth; self-registration is disabled. Add the site's `/auth/confirm` URL to Supabase Auth's allowed redirect URLs. Then apply the latest Drizzle migration with `npm run db:migrate`. Every saved offering update requires an HTTPS SEC filing or issuer-announcement URL and adds an append-only review-history row; no source URL is fetched by the app.
+The `/review` area uses Supabase Auth email links and permits only the address in `IPO_RADAR_ADMIN_EMAIL`. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `IPO_RADAR_ADMIN_EMAIL`, and `NEXT_PUBLIC_SITE_URL` in Vercel and local development. The configured reviewer must already exist in Supabase Auth; self-registration is disabled. Add the site's `/auth/confirm` URL to Supabase Auth's allowed redirect URLs. The callback supports Supabase's default Magic Link template, so custom SMTP and email-template edits are not required. Then apply the latest Drizzle migration with `npm run db:migrate`. Every saved offering update requires an HTTPS SEC filing or issuer-announcement URL and adds an append-only review-history row; no source URL is fetched by the app.
 
 ## Database
 
